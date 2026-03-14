@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gnc_tools"
+version = "0.1.0"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+py-modules = ["gnc_balance_assertion", "gnc_attachment_check", "util"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+

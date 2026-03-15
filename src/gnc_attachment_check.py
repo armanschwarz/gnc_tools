@@ -4,36 +4,26 @@ import argparse
 import os
 import urllib
 from urllib import request
-from xml.dom import minidom
 
 import util
 
 
 def check_attachments(gnucash_file, base_path):
-    doc = minidom.parseString(util.read(gnucash_file))
-
-    slot_values = doc.getElementsByTagName("slot")
+    session = util.open_book(gnucash_file)
+    book = session.book
 
     file_paths = []
-
-    for x in slot_values:
-        slot_key = x.getElementsByTagName("slot:key")[0].firstChild.data
-
-        if slot_key == "assoc_uri":
-            rel_path = request.url2pathname(
-                urllib.parse.urlparse(
-                    x.getElementsByTagName("slot:value")[0].firstChild.data
-                ).path
-            )
-
+    for txn in util.get_all_transactions(book):
+        link = txn.GetDocLink()
+        if link:
+            rel_path = request.url2pathname(urllib.parse.urlparse(link).path)
             # remove leading slashes as this breaks os.path.join
-            while rel_path[0] == "/":
+            while rel_path and rel_path[0] == '/':
                 rel_path = rel_path[1:]
-
             file_paths.append(os.path.join(base_path, rel_path))
 
-    errors = [x for x in file_paths if not os.path.exists(x)]
-
+    session.end()
+    errors = [p for p in file_paths if not os.path.exists(p)]
     return errors, file_paths
 
 

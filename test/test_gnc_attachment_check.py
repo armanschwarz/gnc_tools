@@ -24,7 +24,7 @@ class TestAttachmentCheck(unittest.TestCase):
             self.base_path,
         )
 
-        self.assertEqual(file_paths, [
+        self.assertCountEqual(file_paths, [
             os.path.join(self.base_path, "test_invoice_missing.txt"),
             os.path.join(self.base_path, "test_invoice.txt"),
         ])

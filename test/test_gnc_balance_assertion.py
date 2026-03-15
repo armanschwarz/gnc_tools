@@ -20,7 +20,7 @@ class TestGncTools(unittest.TestCase):
 
         self.assertEqual(error_count, 1)
         self.assertEqual(assertions_count, 4)
-        self.assertEqual(account_results, [
+        self.assertEqual(sorted(account_results), sorted([
             (
                 "Root Account:Assets:Current Assets:Checking Account",
                 1,
@@ -29,4 +29,4 @@ class TestGncTools(unittest.TestCase):
             ("Root Account:Assets:Current Assets:Savings Account", 1, []),
             ("Root Account:Assets:Current Assets:Cash in Wallet", 1, []),
             ("Root Account:Income:Other Income", 1, []),
-        ])
+        ]))

@@ -19,7 +19,7 @@ class TestAttachmentCheck(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_attachment_check(self):
-        errors, file_paths = check_attachments(
+        errors, file_paths, _ = check_attachments(
             str(FIXTURE_DIR / "test_accounts.gnucash"),
             self.base_path,
         )

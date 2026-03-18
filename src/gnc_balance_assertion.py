@@ -16,7 +16,7 @@ def gnc_balance_assertion(gnucash_file, assertion_amount_regex, assertion_start_
     all_accounts = util.get_all_accounts(book.get_root_account())
 
     split_records = []    # rows for DataFrame: (date, amount, acct_guid, decimal_places)
-    assertion_splits = []  # (acct_guid, assertion_amount, assertion_start, txn_date)
+    assertion_splits = []  # (acct_guid, assertion_amount, assertion_start, txn_date, desc)
 
     for acct in all_accounts:
         acct_guid = util.guid_string(acct)
@@ -39,7 +39,7 @@ def gnc_balance_assertion(gnucash_file, assertion_amount_regex, assertion_start_
                     start_match = re.search('(' + assertion_start_regex + ')', desc)
                     if start_match:
                         assertion_start = pandas.to_datetime(start_match.group(0))
-                assertion_splits.append((acct_guid, assertion_amount, assertion_start, txn_date))
+                assertion_splits.append((acct_guid, assertion_amount, assertion_start, txn_date, desc))
 
     splits_df = pandas.DataFrame(split_records, columns=['Date', 'Amount', 'Account', 'DecimalPlaces'])
 
@@ -49,10 +49,10 @@ def gnc_balance_assertion(gnucash_file, assertion_amount_regex, assertion_start_
 
     for acct in all_accounts:
         acct_guid = util.guid_string(acct)
-        assertions = [(aa, as_, td) for (ag, aa, as_, td) in assertion_splits if ag == acct_guid]
+        assertions = [(aa, as_, td, d) for (ag, aa, as_, td, d) in assertion_splits if ag == acct_guid]
 
-        error_messages = []
-        for assertion_amount, assertion_start, txn_date in assertions:
+        errors = []
+        for assertion_amount, assertion_start, txn_date, desc in assertions:
             subset = splits_df[
                 (splits_df.Date <= txn_date)
                 & (splits_df.Date >= assertion_start)
@@ -62,18 +62,11 @@ def gnc_balance_assertion(gnucash_file, assertion_amount_regex, assertion_start_
 
             if abs(balance - assertion_amount) > 0:
                 error_count += 1
-                error_messages.append(
-                    '\tERROR: Assertion of {} against balance of {} ({} - {})'.format(
-                        assertion_amount,
-                        balance,
-                        assertion_start.date(),
-                        txn_date.date(),
-                    )
-                )
+                errors.append((txn_date.date(), desc, assertion_amount, balance, assertion_start.date()))
 
         if assertions:
             assertions_count += len(assertions)
-            account_results.append((util.get_long_name(acct), len(assertions), error_messages))
+            account_results.append((util.get_long_name(acct), len(assertions), errors))
 
     session.end()
     return error_count, assertions_count, account_results
@@ -93,10 +86,11 @@ if __name__ == "__main__":
         args.assertion_amount_regex,
         args.assertion_start_regex,
     )
-    for account_name, assertion_count, error_messages in account_results:
-        print("Found {} assertions and {} errors in: {}".format(
-            assertion_count, len(error_messages), account_name
-        ))
-        for msg in error_messages:
-            print(msg)
+    for account_name, assertion_count, errors in account_results:
+        for date, desc, assertion_amount, balance, assertion_start in errors:
+            print("Failed assertion in {}".format(account_name))
+            print("  Date:             {}".format(date))
+            print("  Description:      {}".format(desc))
+            print("  Asserted balance: {}".format(assertion_amount))
+            print("  Actual balance:   {} (since: {})".format(balance, assertion_start))
     print("found {} errors in {} assertions!".format(error_count, assertions_count))

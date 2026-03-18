@@ -20,11 +20,12 @@ class TestGncTools(unittest.TestCase):
 
         self.assertEqual(error_count, 1)
         self.assertEqual(assertions_count, 4)
+        import datetime
         self.assertEqual(sorted(account_results), sorted([
             (
                 "Root Account:Assets:Current Assets:Checking Account",
                 1,
-                ["\tERROR: Assertion of 123.6 against balance of 123.5 (1900-01-01 - 2026-03-16)"],
+                [(datetime.date(2026, 3, 16), "Balance Assertion: 123.60 (incorrect balance assertion)", 123.6, 123.5, datetime.date(1900, 1, 1))],
             ),
             ("Root Account:Assets:Current Assets:Savings Account", 1, []),
             ("Root Account:Assets:Current Assets:Cash in Wallet", 1, []),
